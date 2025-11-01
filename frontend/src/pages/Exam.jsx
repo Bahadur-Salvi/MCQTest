@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react';
@@ -32,6 +33,20 @@ const Exam = () => {
     setShowWarning(false);
   };
 
+  const handleMSQAnswerToggle = (questionId, optionId) => {
+    setAnswers(prev => {
+      const currentAnswers = prev[questionId] || [];
+      const newAnswers = currentAnswers.includes(optionId)
+        ? currentAnswers.filter(id => id !== optionId)
+        : [...currentAnswers, optionId];
+      return {
+        ...prev,
+        [questionId]: newAnswers
+      };
+    });
+    setShowWarning(false);
+  };
+
   const handleSubmit = () => {
     const unanswered = questions.filter(q => !answers[q.id]);
     
@@ -54,7 +69,7 @@ const Exam = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">MCQ Exam</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">MCQ/MSQ Exam</h1>
           <p className="text-gray-600">Answer all questions and submit when ready</p>
         </div>
 
@@ -105,35 +120,72 @@ const Exam = () => {
             <Card>
               <CardContent className="p-8">
                 <div className="mb-6">
-                  <Badge variant="outline" className="mb-4">
-                    Question {currentQuestion + 1} of {questions.length}
-                  </Badge>
+                  <div className="flex gap-2 mb-4">
+                    <Badge variant="outline">
+                      Question {currentQuestion + 1} of {questions.length}
+                    </Badge>
+                    <Badge variant={questions[currentQuestion].type === 'MSQ' ? 'default' : 'secondary'}>
+                      {questions[currentQuestion].type}
+                    </Badge>
+                  </div>
                   <h2 className="text-xl font-semibold text-gray-900">
                     {questions[currentQuestion].question}
                   </h2>
                 </div>
 
-                <RadioGroup
-                  value={answers[questions[currentQuestion].id] || ''}
-                  onValueChange={(value) => handleAnswerSelect(questions[currentQuestion].id, value)}
-                  className="space-y-3"
-                >
-                  {questions[currentQuestion].options.map((option) => (
-                    <div
-                      key={option.id}
-                      className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                        answers[questions[currentQuestion].id] === option.id
-                          ? 'border-gray-900 bg-gray-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <RadioGroupItem value={option.id} id={option.id} className="mt-0.5" />
-                      <Label htmlFor={option.id} className="flex-1 cursor-pointer text-base">
-                        <span className="font-medium text-gray-700">{option.id}.</span> {option.text}
-                      </Label>
+                {questions[currentQuestion].type === 'MCQ' ? (
+                  <RadioGroup
+                    value={answers[questions[currentQuestion].id] || ''}
+                    onValueChange={(value) => handleAnswerSelect(questions[currentQuestion].id, value)}
+                    className="space-y-3"
+                  >
+                    {questions[currentQuestion].options.map((option) => (
+                      <div
+                        key={option.id}
+                        className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                          answers[questions[currentQuestion].id] === option.id
+                            ? 'border-gray-900 bg-gray-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <RadioGroupItem value={option.id} id={option.id} className="mt-0.5" />
+                        <Label htmlFor={option.id} className="flex-1 cursor-pointer text-base">
+                          <span className="font-medium text-gray-700">{option.id}.</span> {option.text}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="mb-2 text-sm text-gray-600 font-medium">
+                      <Badge variant="secondary">Multiple Select - Choose all that apply</Badge>
                     </div>
-                  ))}
-                </RadioGroup>
+                    {questions[currentQuestion].options.map((option) => {
+                      const isChecked = (answers[questions[currentQuestion].id] || []).includes(option.id);
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                            isChecked
+                              ? 'border-gray-900 bg-gray-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleMSQAnswerToggle(questions[currentQuestion].id, option.id)}
+                        >
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => handleMSQAnswerToggle(questions[currentQuestion].id, option.id)}
+                            id={option.id}
+                            className="mt-0.5"
+                          />
+                          <Label htmlFor={option.id} className="flex-1 cursor-pointer text-base">
+                            <span className="font-medium text-gray-700">{option.id}.</span> {option.text}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center mt-8 pt-6 border-t">
                   <Button
