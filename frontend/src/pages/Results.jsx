@@ -27,11 +27,22 @@ const Results = () => {
     setQuestions(questionsData);
     setAnswers(answersData);
 
-    // Calculate score
     let correctCount = 0;
     questionsData.forEach(q => {
-      if (answersData[q.id] === q.correctAnswer) {
-        correctCount++;
+      if (q.type === 'MSQ') {
+        const userAnswers = answersData[q.id] || [];
+        const correctAnswers = q.correctAnswer;
+        
+        const isCorrect = correctAnswers.length === userAnswers.length &&
+          correctAnswers.every(ans => userAnswers.includes(ans));
+        
+        if (isCorrect) {
+          correctCount++;
+        }
+      } else {
+        if (answersData[q.id] === q.correctAnswer) {
+          correctCount++;
+        }
       }
     });
 
@@ -45,12 +56,29 @@ const Results = () => {
       total: questions.length,
       percentage: percentage,
       date: new Date().toISOString(),
-      questions: questions.map(q => ({
-        question: q.question,
-        yourAnswer: answers[q.id],
-        correctAnswer: q.correctAnswer,
-        isCorrect: answers[q.id] === q.correctAnswer
-      }))
+      questions: questions.map(q => {
+        if (q.type === 'MSQ') {
+          const userAnswers = answers[q.id] || [];
+          const correctAnswers = q.correctAnswer;
+          const isCorrect = correctAnswers.length === userAnswers.length &&
+            correctAnswers.every(ans => userAnswers.includes(ans));
+          return {
+            question: q.question,
+            type: q.type,
+            yourAnswers: userAnswers,
+            correctAnswers: correctAnswers,
+            isCorrect: isCorrect
+          };
+        } else {
+          return {
+            question: q.question,
+            type: q.type,
+            yourAnswer: answers[q.id],
+            correctAnswer: q.correctAnswer,
+            isCorrect: answers[q.id] === q.correctAnswer
+          };
+        }
+      })
     };
 
     const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });

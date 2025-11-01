@@ -18,17 +18,20 @@ const Home = () => {
     }
 
     const questions = [];
-    // Skip header row
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Simple CSV parsing (handles basic cases)
       const values = line.split(',').map(v => v.trim());
       
       if (values.length < 6) {
         throw new Error(`Line ${i + 1}: Expected 6 columns (question, option_a, option_b, option_c, option_d, correct_answer)`);
       }
+
+      const correctAnswerValue = values[5].toUpperCase();
+      const correctAnswers = correctAnswerValue.split(',').map(ans => ans.trim()).filter(ans => ans);
+      
+      const isMSQ = correctAnswers.length > 1;
 
       questions.push({
         id: i,
@@ -39,7 +42,8 @@ const Home = () => {
           { id: 'C', text: values[3] },
           { id: 'D', text: values[4] }
         ],
-        correctAnswer: values[5].toUpperCase()
+        correctAnswer: isMSQ ? correctAnswers : correctAnswers[0],
+        type: isMSQ ? 'MSQ' : 'MCQ'
       });
     }
 
@@ -109,7 +113,7 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">MCQ Testing Platform</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">MCQ/MSQ Testing Platform</h1>
           <p className="text-gray-600 text-lg">Upload your CSV file and start your exam</p>
         </div>
 
@@ -117,7 +121,8 @@ const Home = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Upload Question File</CardTitle>
             <CardDescription>
-              CSV format: question, option_a, option_b, option_c, option_d, correct_answer
+              CSV format: question, option_a, option_b, option_c, option_d, correct_answer(s)<br/>
+              For MSQ: Use comma-separated correct answers (e.g., A,C). For MCQ: Use single answer (e.g., B)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -173,6 +178,7 @@ const Home = () => {
 question,option_a,option_b,option_c,option_d,correct_answer
 What is 2+2?,3,4,5,6,B
 Capital of France?,London,Berlin,Paris,Madrid,C
+Select prime numbers,1,2,3,4,"B,C"
               </pre>
             </div>
 

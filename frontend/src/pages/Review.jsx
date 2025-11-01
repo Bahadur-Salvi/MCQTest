@@ -46,7 +46,16 @@ const Review = () => {
         <div className="space-y-6">
           {questions.map((question, idx) => {
             const userAnswer = answers[question.id];
-            const isCorrect = userAnswer === question.correctAnswer;
+            let isCorrect;
+            
+            if (question.type === 'MSQ') {
+              const userAnswers = userAnswer || [];
+              const correctAnswers = question.correctAnswer;
+              isCorrect = correctAnswers.length === userAnswers.length &&
+                correctAnswers.every(ans => userAnswers.includes(ans));
+            } else {
+              isCorrect = userAnswer === question.correctAnswer;
+            }
 
             return (
               <Card key={question.id} className={`border-l-4 ${
@@ -56,6 +65,7 @@ const Review = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <Badge variant="outline">Question {idx + 1}</Badge>
+                      <Badge variant="secondary">{question.type}</Badge>
                       {isCorrect ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -76,8 +86,17 @@ const Review = () => {
 
                   <div className="space-y-2">
                     {question.options.map((option) => {
-                      const isUserAnswer = userAnswer === option.id;
-                      const isCorrectAnswer = question.correctAnswer === option.id;
+                      let isUserAnswer, isCorrectAnswer;
+                      
+                      if (question.type === 'MSQ') {
+                        const userAnswers = userAnswer || [];
+                        const correctAnswers = question.correctAnswer;
+                        isUserAnswer = userAnswers.includes(option.id);
+                        isCorrectAnswer = correctAnswers.includes(option.id);
+                      } else {
+                        isUserAnswer = userAnswer === option.id;
+                        isCorrectAnswer = question.correctAnswer === option.id;
+                      }
 
                       return (
                         <div
